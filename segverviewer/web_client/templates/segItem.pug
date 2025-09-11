@@ -1,0 +1,142 @@
+.g-container
+  .g-item-info-header
+    i.icon-picture
+    | Segmentation Viewer
+.g-panes.clearfix
+  .g-file-selection
+    .g-dropdown-container
+      .g-dropdown-group
+        label.g-dropdown-label Source Volume
+        .dropdown.g-volume-dropdown
+          button.btn.btn-sm.btn-default.dropdown-toggle(type="button", data-toggle="dropdown", aria-haspopup="true", aria-expanded="false")
+            | Select option
+            span.caret
+          ul.dropdown-menu.g-volume-options
+            // Options will be populated dynamically
+
+    .g-dropdown-container
+      .g-dropdown-group
+        label.g-dropdown-label Segmentation 1
+        .dropdown.g-seg1-dropdown
+          button.btn.btn-sm.btn-default.dropdown-toggle(type="button", data-toggle="dropdown", aria-haspopup="true", aria-expanded="false")
+            | Select option
+            span.caret
+          ul.dropdown-menu.g-seg1-options
+            // Options will be populated dynamically
+      
+      .g-dropdown-group
+        label.g-dropdown-label Segmentation 2
+        .dropdown.g-seg2-dropdown
+          button.btn.btn-sm.btn-default.dropdown-toggle(type="button", data-toggle="dropdown", aria-haspopup="true", aria-expanded="false")
+            | Select option
+            span.caret
+          ul.dropdown-menu.g-seg2-options
+            // Options will be populated dynamically
+
+    .g-tag-container
+      .g-tag-group
+        label.g-tag-label Tag Segmentation 1
+        input.g-seg1-tag(type="text", placeholder="Enter tag for Segmentation 1...")
+      .g-tag-group
+        label.g-tag-label Tag Segmentation 2
+        input.g-seg2-tag(type="text", placeholder="Enter tag for Segmentation 2...")
+
+    .g-comment-container
+      .g-comment-group
+        label.g-comment-label Comment Segmentation 1
+        textarea.g-seg1-comment(placeholder="Enter comments for Segmentation 1...")
+      
+      .g-comment-group
+        label.g-comment-label Comment Segmentation 2
+        textarea.g-seg2-comment(placeholder="Enter comments for Segmentation 2...")
+
+    .g-dropdown-container
+      .g-dropdown-group
+        label.g-dropdown-label Labels in segmentation 1
+        .dropdown.g-label1-dropdown
+          button.btn.btn-sm.btn-default.dropdown-toggle(type="button", data-toggle="dropdown", aria-haspopup="true", aria-expanded="false")
+            | Select option
+            span.caret
+          ul.dropdown-menu.g-label1-options
+            // Options will be populated dynamically
+      
+      .g-dropdown-group
+        label.g-dropdown-label Labels in segmentation 2
+        .dropdown.g-label2-dropdown
+          button.btn.btn-sm.btn-default.dropdown-toggle(type="button", data-toggle="dropdown", aria-haspopup="true", aria-expanded="false")
+            | Select option
+            span.caret
+          ul.dropdown-menu.g-label2-options
+            // Options will be populated dynamically
+
+  .g-left
+    // left up
+    .g-seg-1
+      .g-filename
+    // left down
+    .g-base
+      .g-filename
+
+  .g-right
+    // right up
+    .g-seg-2
+      .g-filename
+    // right down
+    .g-seg-diff
+      // May be better as literal text
+      .g-filename
+        | Difference
+
+  .g-seg-controls
+    .g-controls-left
+      label.g-slice-label(for="g-slice-slider") Slice
+      input#g-slice-slider.g-slice-slider(type="range", min="0", max="0", value="0")
+      input#g-slice-value.g-slice-value(type="number", min="0", max="0", value="0", step="1", style="width: 50px; margin-left: 10px;")
+    .g-controls-right
+      button.g-seg-zoom-in.btn.btn-sm.btn-default(title="Zoom In")
+        i.icon-zoom-in
+      button.g-seg-zoom-out.btn.btn-sm.btn-default(title="Zoom Out")
+        i.icon-zoom-out
+      button.g-seg-reset-zoom.btn.btn-sm.btn-default(title="Reset Zoom")
+        i.icon-search
+      button.g-seg-auto-levels.btn.btn-sm.btn-default(title="Auto Levels")
+        i.icon-ajust
+
+  .g-seg-info
+    .g-quantification-1
+      label.g-quant-label Quantification
+      .g-quant-content-1
+        .g-quant-row Min: 
+          span.g-quant1-min
+        .g-quant-row Max: 
+          span.g-quant1-max
+        .g-quant-row Mean: 
+          span.g-quant1-mean
+        .g-quant-row SD: 
+          span.g-quant1-sd
+        .g-quant-row Volume (mm3): 
+          span.g-quant1-volume
+
+    .g-quantification-2
+      label.g-quant-label Quantification
+      .g-quant-content-2
+        .g-quant-row Min: 
+          span.g-quant2-min
+        .g-quant-row Max: 
+          span.g-quant2-max
+        .g-quant-row Mean: 
+          span.g-quant2-mean
+        .g-quant-row SD: 
+          span.g-quant2-sd
+        .g-quant-row Volume (mm3): 
+          span.g-quant2-volume
+
+  .g-seg-metrics
+    label.g-seg-metrics-label Metrics
+    .g-seg-metrics-content
+      .g-quant-row DICE: 
+        span.g-seg-metrics-dice
+      .g-quant-row Hausdorff distance (mm): 
+        span.g-seg-metrics-hausdorff
+      .g-quant-row Average Symmetric Surface Distance (mm): 
+        span.g-seg-metrics-assd

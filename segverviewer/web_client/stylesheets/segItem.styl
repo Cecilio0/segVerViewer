@@ -1,0 +1,163 @@
+.g-view
+  margin-bottom 15px
+
+  input
+    border 1px solid #ccc
+    border-radius 4px
+
+  .g-file-selection
+    .g-dropdown-container
+      display flex
+      gap 20px
+      align-items center
+      margin-top 10px
+
+    .g-dropdown-group
+      display flex
+      flex-direction column
+      align-items flex-start
+
+    .g-dropdown-label
+      margin-bottom 5px
+      font-weight bold
+
+    .dropdown
+      button.dropdown-toggle
+        width 256px
+        text-overflow ellipsis
+        overflow hidden
+
+    .g-comment-container, .g-tag-container
+      display flex
+      gap 20px
+      align-items flex-start
+      margin-top 15px
+      padding-right 15px
+
+    .g-comment-group, .g-tag-group
+      display flex
+      flex-direction column
+      align-items flex-start
+      flex 1
+      width 256px
+      max-width 256px
+
+    .g-seg1-tag, .g-seg2-tag
+      width 256px
+
+    .g-comment-label
+      margin-bottom 5px
+      font-weight bold
+
+    textarea
+      width 256px
+      min-height 80px
+      resize vertical
+      border 1px solid #ccc
+      border-radius 4px
+      padding 8px
+      font-family inherit
+      font-size 14px
+
+      // &:focus
+      //   outline none
+      //   border-color #007cba
+      //   box-shadow 0 0 0 2px rgba(0, 124, 186, 0.2)
+
+  .g-left
+    width 256px
+    height 562px
+    float left
+    margin-top 10px
+
+    .g-seg-1
+      width 256px
+      height 276px
+      margin-right 5px
+      margin-top 5px
+
+    .g-base
+      width 256px
+      height 276px
+      margin-right 5px
+      margin-top 5px
+
+  .g-right
+    width 256px
+    height 572px
+    margin-left 276px
+    padding-top 10px
+
+    .g-seg-2
+      width 256px
+      height 276px
+      margin-right 5px
+      margin-top 5px
+
+    .g-seg-diff
+      width 256px
+      height 276px
+      margin-right 5px
+      margin-top 5px
+  
+  .g-filename
+    text-align center
+    white-space nowrap
+    text-overflow ellipsis
+    overflow hidden
+
+  .g-seg-controls
+    display flex
+    align-items center
+    justify-content space-between
+    flex 1
+    margin-top 10px
+    width 532px
+
+  .g-controls-left
+    display flex
+    align-items center
+
+  .g-controls-right
+    display flex
+    align-items center
+
+  .g-slice-label
+    margin-right 10px
+    font-weight bold
+
+  .g-slice-slider
+    width 250px
+
+  .g-slice-value
+    width 62px
+    display inline-block
+    text-align center
+
+  .g-seg-info
+    margin-top 10px
+    width 532px
+    display flex
+    gap 20px
+
+  .g-quantification-1, .g-quantification-2
+    width 256px
+
+  .g-quant-content-1, .g-quant-content-2, .g-seg-metrics-content
+    border 1px solid #bbb
+    border-radius 6px
+    padding 10px
+    margin-top 5px
+    background #fafafa
+    font-size 14px
+
+  .g-quant-row
+    margin-bottom 4px
+    font-family inherit
+
+  .g-seg-metrics
+    margin-top 10px
+    width 532px
+    display flex
+    flex-direction column
+    align-items flex-start
