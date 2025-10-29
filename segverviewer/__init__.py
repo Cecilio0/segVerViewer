@@ -1,3 +1,4 @@
+import json
 import tempfile
 import shutil
 import numpy as np
@@ -70,11 +71,26 @@ class SegmentationItem(Resource):
             self.create_segmentation_item
         )
 
-        # Related to volsegsync indexing
+        # Related to segverhandler indexing
         self.route(
             'GET',
-            (':id', 'get_volumes'),
-            self.get_volumes
+            (':id', 'is_segverhandler_instance'),
+            self.is_segverhandler_instance
+        )
+        self.route(
+            'GET',
+            (':id', 'get_index'),
+            self.get_index
+        )
+        self.route(
+            'GET',
+            (':id', 'get_all_index_files'),
+            self.get_all_index_files
+        )
+        self.route(
+            'GET',
+            (':id', 'get_volume_files'),
+            self.get_volume_files
         )
         self.route(
             'GET',
@@ -147,9 +163,9 @@ class SegmentationItem(Resource):
         Item().save(new_item)
         return new_item
     
-    @access.user(scope=TokenScope.DATA_WRITE)
+    @access.user(scope=TokenScope.DATA_READ)
     @autoDescribeRoute(
-        Description('Get all volumes within a collection with a volsegSync instance')
+        Description('Get index file for a collection with a segVerHandler instance')
         .modelParam(
             'id',
             'Collection ID',
@@ -160,46 +176,82 @@ class SegmentationItem(Resource):
         .errorResponse('Collection ID was invalid')
         .errorResponse('Read permission denied on the base image item', 403)
     )
-    def get_volumes(self, collection) -> None:
+    def is_segverhandler_instance(self, collection) -> None:
         """
-        Get all identified volumes within a collection with a volsegSync instance
+        Get index file for a collection with a segVerHandler instance
         """
-        # Find the .volsegsync folder in this collection
-        config = _get_volsegsync_config(collection)  # Just to check if it exists
-        if not config:
-            raise ValidationException('Collection is not a volsegsync instance', 'collection')
+        config, index, active_index = _get_segverhandler_instance(collection)
+        if not config or not index or not active_index:
+            return False
+        return True
 
-        volumes_directory = config.get('directories', 'volumes', fallback=None)
-        if not volumes_directory:
-            raise ValidationException('volumes directory not specified in config', '')
-        
-        volume_file_extension = config.get('extensions', 'volumes', fallback=None)
-        if not volume_file_extension:
-            raise ValidationException('volumes file extension not specified in config', '')
-
-        volume_folder = Folder().findOne({
-            'parentId': collection['_id'],
-            'name': volumes_directory
-        })
-
-        if not volume_folder:
-            raise ValidationException(f'volumes directory \'{volumes_directory}\' not found in collection', 'collection')
-
-        volume_files = []
-        for item in Item().find({'folderId': volume_folder['_id']}):
-            for file in Item().childFiles(item):
-                exts = f'.{". ".join(file["exts"])}'
-                if exts == volume_file_extension:
-                    volume_files.append({
-                        'name': file['name'],
-                        '_id': file['_id'],
-                    })
-
-        return volume_files
-    
-    @access.user(scope=TokenScope.DATA_WRITE)
+    @access.user(scope=TokenScope.DATA_READ)
     @autoDescribeRoute(
-        Description('Get all volumes within a collection with a volsegSync instance')
+        Description('Get index file for a collection with a segVerHandler instance')
+        .modelParam(
+            'id',
+            'Collection ID',
+            model='collection',
+            level=AccessType.READ,
+            paramType='path'
+        )
+        .errorResponse('Collection ID was invalid')
+        .errorResponse('Read permission denied on the base image item', 403)
+    )
+    def get_index(self, collection) -> None:
+        """
+        Get index file for a collection with a segVerHandler instance
+        """
+        _, index, _ = _get_segverhandler_instance(collection)
+        return index
+
+    @access.user(scope=TokenScope.DATA_READ)
+    @autoDescribeRoute(
+        Description('Get all files within a collection related segVerHandler index')
+        .modelParam(
+            'id',
+            'Collection ID',
+            model='collection',
+            level=AccessType.READ,
+            paramType='path'
+        )
+        .errorResponse('Collection ID was invalid')
+        .errorResponse('Read permission denied on the base image item', 403)
+    )
+    def get_all_index_files(self, collection) -> None:
+        """
+        Get all identified volumes within a collection with a segVerHandler instance
+        """
+        volume_files = _get_volume_files(collection)
+        segmentation_files = _get_seg_files(collection)
+        volume_files.extend(segmentation_files)
+        print(volume_files)
+        return volume_files
+
+
+    @access.user(scope=TokenScope.DATA_READ)
+    @autoDescribeRoute(
+        Description('Get all volumes within a collection with a segVerHandler instance')
+        .modelParam(
+            'id',
+            'Collection ID',
+            model='collection',
+            level=AccessType.READ,
+            paramType='path'
+        )
+        .errorResponse('Collection ID was invalid')
+        .errorResponse('Read permission denied on the base image item', 403)
+    )
+    def get_volume_files(self, collection) -> None:
+        """
+        Get all identified volumes within a collection with a segVerHandler instance
+        """
+        return _get_volume_files(collection)
+
+
+    @access.user(scope=TokenScope.DATA_READ)
+    @autoDescribeRoute(
+        Description('Get all volumes within a collection with a segVerHandler instance')
         .modelParam(
             'id',
             'Collection ID',
@@ -212,43 +264,9 @@ class SegmentationItem(Resource):
     )
     def get_seg_files(self, collection) -> None:
         """
-        Get all identified segmentation files within a collection with a volsegSync instance that belong to a specific volume
+        Get all identified segmentation files within a collection with a segVerHandler instance that belong to a specific volume
         """
-        # Find the .volsegsync folder in this collection
-        config = _get_volsegsync_config(collection)  # Just to check if it exists
-        if not config:
-            raise ValidationException('Collection is not a volsegsync instance', 'collection')
-
-        segmentation_directory = config.get('directories', 'segmentations', fallback=None)
-        if not segmentation_directory:
-            raise ValidationException('segmentation directory not specified in config', '')
-
-        segmentation_file_extension = config.get('extensions', 'segmentations', fallback=None)
-        if not segmentation_file_extension:
-            raise ValidationException('segmentation file extension not specified in config', '')
-        print(f'segmentation_file_extension: {segmentation_file_extension}')
-
-        segmentation_folder = Folder().findOne({
-            'parentId': collection['_id'],
-            'name': segmentation_directory
-        })
-
-        if not segmentation_folder:
-            raise ValidationException(f'segmentation directory \'{segmentation_directory}\' not found in collection', 'collection')
-
-        segmentation_files = []
-        for item in Item().find({'folderId': segmentation_folder['_id']}):
-            for file in Item().childFiles(item):
-                exts = f'.{".".join(file["exts"])}'
-                clean_name = file['name'].split('.')[0]
-                print(f'file: {file["name"]}, clean_name: {clean_name}, exts: {exts}')
-                if exts == segmentation_file_extension:
-                    segmentation_files.append({
-                        'name': file['name'],
-                        '_id': file['_id'],
-                    })
-
-        return segmentation_files
+        return _get_seg_files(collection)
 
     # Not needed anymore
     @access.user(scope=TokenScope.DATA_WRITE)
@@ -567,9 +585,26 @@ class SegmentationItem(Resource):
             raise ValidationException('Segmentation file is not readable by SimpleITK', '')
 
 
-def _get_volsegsync_config(collection: Collection):
+def _get_segverhandler_instance(collection: Collection):
     """
-    Get the .volsegsync configuration from a collection.
+    Get all the information related to a segverhandler instance within a collection.
+    """
+    config = _get_segverhandler_config(collection)
+    if not config:
+        return (None, None, None)
+
+    active_index = config["index"]["active"]
+
+    index = _get_segverhandler_index(collection, active_index)
+    if not index:
+        return (None, None, None)
+
+    return (config, index, active_index)
+
+
+def _get_segverhandler_config(collection: Collection):
+    """
+    Get the .segverhandler configuration from a collection.
     
     :param collection: Girder collection object
     :return: configuration object or None if not found
@@ -577,15 +612,17 @@ def _get_volsegsync_config(collection: Collection):
     folder = Folder().findOne({
         'parentId': collection['_id'],
         'parentCollection': 'collection',
-        'name': '.volsegsync'
+        'name': '.segverhandler'
     })
 
     if not folder:
         return None
+    
+    config_file_name = 'config'
 
     config_item = Item().findOne({
         'folderId': folder['_id'],
-        'name': 'config'
+        'name': config_file_name
     })
 
     if not config_item:
@@ -593,7 +630,7 @@ def _get_volsegsync_config(collection: Collection):
 
     config_file = File().findOne({
         'itemId': config_item['_id'],
-        'name': 'config'
+        'name': config_file_name
     })
 
     if not config_file:
@@ -603,6 +640,120 @@ def _get_volsegsync_config(collection: Collection):
     with File().open(config_file) as fp:
         config.read_string(fp.read().decode('utf-8'))
         return config
+
+
+def _get_segverhandler_index(collection: Collection, active_index: str) -> dict:
+    """
+    Get the .segverhandler index from a collection.
+
+    :param collection: Girder collection object
+    :return: index file list or None if not found
+    """
+    folder = Folder().findOne({
+        'parentId': collection['_id'],
+        'parentCollection': 'collection',
+        'name': '.segverhandler'
+    })
+
+    if not folder:
+        return None
+
+    index_name = f"{active_index}.manifest.json"
+
+    index_item = Item().findOne({
+        'folderId': folder['_id'],
+        'name': index_name
+    })
+
+    if not index_item:
+        return None
+
+    index_file = File().findOne({
+        'itemId': index_item['_id'],
+        'name': index_name
+    })
+
+    if not index_file:
+        return None
+    
+    with File().open(index_file) as fp:
+        index = json.load(fp)
+
+    return index
+
+
+def _get_seg_files(collection: Collection) -> list:
+    # Find the .segverhandler folder in this collection
+    _, index, _ = _get_segverhandler_instance(collection)
+
+    segmentation_directory = index.get('label-path', None)
+    if not segmentation_directory:
+        raise ValidationException('segmentation directory not specified in config', '')
+
+    segmentation_file_extension = index.get('label-extension', None)
+    if not segmentation_file_extension:
+        raise ValidationException('segmentation file extension not specified in config', '')
+
+    segmentation_folder = Folder().findOne({
+        'parentId': collection['_id'],
+        'name': segmentation_directory
+    })
+
+    if not segmentation_folder:
+        raise ValidationException(f'segmentation directory \'{segmentation_directory}\' not found in collection', 'collection')
+
+    segmentation_files = _lookup_files_in_folder(segmentation_folder)
+
+    segmentation_file_data = []
+    for _, volume_data in index['volumes'].items():
+        for segmentation in volume_data['versions']:
+            for segmentation_file in segmentation_files:
+                if f'{segmentation['id']}{segmentation_file_extension}' == segmentation_file['name']:
+                    segmentation_file_data.append({
+                        'name': segmentation_file['name'],
+                        '_id': segmentation_file['_id']
+                    })
+                    
+    return segmentation_file_data
+
+
+def _get_volume_files(collection: Collection) -> list:
+    # Find the .segverhandler folder in this collection
+    _, index, _ = _get_segverhandler_instance(collection)
+
+    volumes_directory = index.get('volume-path', None)
+    if not volumes_directory:
+        raise ValidationException('volumes directory not specified in config', '')
+    
+    volume_file_extension = index.get('volume-extension', None)
+    if not volume_file_extension:
+        raise ValidationException('volumes file extension not specified in config', '')
+
+    volume_folder = Folder().findOne({
+        'parentId': collection['_id'],
+        'name': volumes_directory
+    })
+
+    if not volume_folder:
+        raise ValidationException(f'volumes directory \'{volumes_directory}\' not found in collection', 'collection')
+
+    volumes_in_index = [f"{file}{volume_file_extension}" for file in index['volumes']]
+    folder_files = _lookup_files_in_folder(volume_folder)
+    volume_files = [ file for file in folder_files if file["name"] in volumes_in_index ]
+    return [ {'name': file['name'], '_id': file['_id']} for file in volume_files ]
+
+
+
+def _lookup_files_in_folder(folder: Folder) -> list:
+    """
+    Look up files in a folder by extension.
+    """
+    files = []
+    for item in Item().find({'folderId': folder['_id']}):
+        for file in Item().childFiles(item):
+            files.append(file)
+
+    return files
 
 
 def _read_image_with_sitk(file) -> tuple:

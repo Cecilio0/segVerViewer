@@ -481,8 +481,12 @@ const SegItemView = View.extend({
      */
     initialize: function (settings) {
         this._id = settings.item.id;
-        this._id = '6871135d7be2d603fa63f950';
-        this._files = new ImageFileCollection(settings.item.get('segmentation').images || []);
+        this._index = settings.index || null;
+        this._files = new ImageFileCollection(settings.allIndexFiles || []);
+
+        console.log('[SegItemView::initialize] all index files: ', settings.allIndexFiles);
+        console.log('[SegItemView::initialize] index: ', settings.index);
+
         this._volumeFiles = new ImageFileCollection([]);
         this._baseImageFile = null;
         this._seg1File = null;
