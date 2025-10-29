@@ -477,15 +477,12 @@ const SegItemView = View.extend({
     },
     /**
      *
-     * @param {ItemModel} settings.item An item with its `dicom` attribute set.
+     * @param {CollectionModel} settings.model A collection model.
      */
     initialize: function (settings) {
-        this._id = settings.item.id;
+        this._id = settings.model.id;
         this._index = settings.index || null;
-        this._files = new ImageFileCollection(settings.allIndexFiles || []);
-
-        console.log('[SegItemView::initialize] all index files: ', settings.allIndexFiles);
-        console.log('[SegItemView::initialize] index: ', settings.index);
+        this._files = new ImageFileCollection(settings.segFiles || []);
 
         this._volumeFiles = new ImageFileCollection([]);
         this._baseImageFile = null;
@@ -516,7 +513,7 @@ const SegItemView = View.extend({
         });
 
         restRequest({
-            url: `segmentation/${this._id}/get_volumes`,
+            url: `segmentation/${this._id}/get_volume_files`,
             method: 'GET'
         }).then((resp) => {
             console.log('[SegItemView::render] volume files response: ', resp);
@@ -529,35 +526,34 @@ const SegItemView = View.extend({
             if (this._volumeFiles.length > 0) {
                 this._volumeFiles.selectVolumeIndex(this._volumeFiles._selectedVolume);
             }
+                // Populate dropdowns with segmentation files
+            this._populateSegDropdowns();
+
+            this._seg1View = new SegImageWidget({
+                el: this.$('.g-seg-1'),
+                parentView: this
+            });
+
+            if (this._files.length > 0) {
+                this._files.selectSeg1Index(this._files._selectedSeg1);
+            }
+
+            this._seg2View = new SegImageWidget({
+                el: this.$('.g-seg-2'),
+                parentView: this
+            });
+
+            if (this._files.length > 1) {
+                this._files.selectSeg2Index(this._files._selectedSeg2);
+            }
+
+            this._diffView = new SegImageWidget({
+                el: this.$('.g-seg-diff'),
+                parentView: this
+            });
+
+            this._setDiffImage();
         });
-
-        // Populate dropdowns with segmentation files
-        this._populateSegDropdowns();
-
-        this._seg1View = new SegImageWidget({
-            el: this.$('.g-seg-1'),
-            parentView: this
-        });
-
-        if (this._files.length > 0) {
-            this._files.selectSeg1Index(this._files._selectedSeg1);
-        }
-
-        this._seg2View = new SegImageWidget({
-            el: this.$('.g-seg-2'),
-            parentView: this
-        });
-
-        if (this._files.length > 1) {
-            this._files.selectSeg2Index(this._files._selectedSeg2);
-        }
-
-        this._diffView = new SegImageWidget({
-            el: this.$('.g-seg-diff'),
-            parentView: this
-        });
-
-        this._setDiffImage();
 
         return this;
     },
@@ -569,7 +565,7 @@ const SegItemView = View.extend({
             this._seg1File = selectedFile;
         }
         // selectedFile.getImage(this._slice, true, null, this._baseImageFile.id)
-        selectedFile.getImage(this._slice, true, null, '688974467133106ae84a09af')
+        selectedFile.getImage(this._slice, true, null, this._baseImageFile.id)
             .then((image) => {
                 if (isNewFile) {
                     this._populateSegDropdowns();
@@ -603,7 +599,8 @@ const SegItemView = View.extend({
             this._seg2File = selectedFile;
         }
         // selectedFile.getImage(this._slice, true, null, this._baseImageFile.id)
-        selectedFile.getImage(this._slice, true, null, '688974467133106ae84a09af')
+        console.log("8780", this._baseImageFile);
+        selectedFile.getImage(this._slice, true, null, this._baseImageFile.id)
             .then((image) => {
                 if (isNewFile) {
                     // update only if a new file is selected
